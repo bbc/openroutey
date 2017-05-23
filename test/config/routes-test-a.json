@@ -1,0 +1,50 @@
+{
+    "routes" : [
+        {
+            "pathMatch" : "^/a/redirect$",
+            "location": "/a/happy-path",
+            "status" : 301
+        },
+        {
+            "pathMatch" : "^/a/redirect2",
+            "location": "/a/happy-path",
+            "status" : 302
+        },
+        {
+            "pathMatch" : "^/a/400%-example$",
+            "status" : 400,
+            "body" : "nothing here"
+        },
+        {
+            "pathMatch" : "^/a/ok$",
+            "status" : 200,
+            "body" : "Yes thanks"
+        },
+        {
+            "pathMatch" : "^/a/some%-",
+            "originId": "localhost"
+        },
+        {
+            "pathMatch" : "^/a/cache",
+            "originId": "localhost"
+        },
+        {
+            "pathMatch" : "^/a/view/.*",
+            "originId": "localhost",
+            "transform" : "envelope"
+        },
+        {
+            "pathMatch" : "^/a/force",
+            "originId": "localhost"
+        },
+        {
+            "pathMatch" : "^/a/foo/bar",
+            "originId": "localhost",
+            "originPath": "/encoded-url/${uriEncoded}"
+        },
+        {
+            "pathMatch" : "^/a/statuses",
+            "originId": "localhost"
+        }
+    ]
+}

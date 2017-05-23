@@ -1,0 +1,28 @@
+{
+  "name": "morph-router",
+  "version": "1.0.0",
+  "description": "A lightweight Nginx layer for routing to Morph and other services",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha 0*"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "express": "^4.15.2",
+    "node-emoji": "^1.5.1",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "expect": "^1.20.2",
+    "expect.js": "^0.3.1",
+    "ioredis": "^2.5.0",
+    "jasmine": "^2.6.0",
+    "mocha": "^3.3.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+    "routes" : [
+        {
+            "pathMatch" : "^/",
+            "routesFile": "routes-test-a.json"
+        },
+        {
+            "pathMatch" : "^/(b|c)",
+            "routesFile": "routes-test-b-and-c.json"
+        }
+    ],
+    "origins" : [
+        {
+            "id": "localhost",
+            "originProtocolAndDomain": "http://127.0.0.1:9100",
+            "originPathPostfix": "?postfix=yes"
+        }
+    ]
+}

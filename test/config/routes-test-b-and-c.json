@@ -1,0 +1,9 @@
+{
+    "routes" : [
+        {
+            "pathMatch" : "^/b/happy-path",
+            "origin": "morph",
+            "path": "/happy-path"
+        }
+    ]
+}
