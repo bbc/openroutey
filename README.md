@@ -14,9 +14,7 @@ OpenRoutey is a Lua library that allows OpenResty (based on Nginx) to have dynam
 
 ## Setup
 
-### Creating a basic routes file
-
-Create a routes file.
+First, create a basic routes file.
 You can call it whatever you like - `routes.json` is a good suggestion.
 You can put it anywhere that OpenResty can access - such as `/etc/openrsesty` or `/usr/local/etc/openresty`.
 
@@ -70,8 +68,7 @@ Then, in the *Server* section, remove any existing `location` entries and add th
 
         #internal; # enable for production env
         proxy_set_header Accept-Encoding ''; # don't accept gzipped responses
-        proxy_ssl_certificate /etc/pki/tls/certs/client.crt;
-        proxy_ssl_certificate_key /etc/pki/tls/private/client.key;
+        # If you need to set client-side SSL certificates, do it here
         proxy_set_header If-None-Match $arg_etag;
 
         resolver 8.8.8.8; # Change this when on AWS
@@ -113,7 +110,7 @@ TODO Write this doc
     echo 'print(string.match("foo-bar", "foo%-bar"))' | lua
 ```
 
-## Testing
+## Testing
 
 Testing is done via a Node.JS script (to simulate an origin server), and the Mocha test framework.
 
