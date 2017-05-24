@@ -48,6 +48,7 @@ Within the 'http' section, add the path that openroutey was installed above, wit
 Then beneath it, initialise OpenRoutey with the following:
 
 ```
+    lua_shared_dict openroutey 100k;
     init_by_lua '
         openroutey = require "openroutey"
         openroutey.init({
