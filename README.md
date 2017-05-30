@@ -1,13 +1,15 @@
 # OpenRoutey
 
-OpenRoutey is a Lua library that allows OpenResty (based on Nginx) to have dynamically-generated routes to origins (backends). Openroutey consults JSON route definitions, either local to the server or served elsewhere, to determine how to route traffic. Other features include the ability to create  *transforms* on responses, and the use of *Redis* as a response cache.
+OpenRoutey is a Lua library that allows OpenResty (based on Nginx) to have dynamically-generated routes to origins (backends). Openroutey consults JSON route definitions, either local to the server or served elsewhere, to determine how to route traffic.
+
+Optionally, OpenRoutey can also use *Redis*, as a response cache. This allows multiple OpenResty servers to share a cache, and allows greater resilience if the origin (backend) is unresponsive.
 
 ## Installation
 
 * First, make sure you have OpenResty installed. See https://openresty.org/en/installation.html
 * OpenRoutey can be installed using opm, OpenResty's package manager:
 
-```
+```bash
    # Pick an installation directory that's suitable for your environment:
    opm --install-dir="/usr/lib/openresty/lualib" install openroutey
 ```
@@ -20,7 +22,7 @@ You can put it anywhere that OpenResty can access - such as `/etc/openrsesty` or
 
 Add the following to the file:
 
-```
+```json
 {
     "routes" : [
         {
@@ -41,13 +43,13 @@ Edit your OpenResty's `nginx.conf`. You may find it in `/etc/openresty` or `/usr
 
 Within the 'http' section, add the path that openroutey was installed above, with `/?.lua;;` at the end, e.g.
 
-```
+```nginx
     lua_package_path "/usr/lib/openresty/lualib/?.lua;;";
 ```
 
 Then beneath it, initialise OpenRoutey with the following:
 
-```
+```nginx
     lua_shared_dict openroutey 100k;
     init_by_lua '
         openroutey = require "openroutey"
@@ -63,7 +65,7 @@ Replace `/path/to/routes.json` with the location of the basic routes file you ma
 
 Then, in the *Server* section, remove any existing `location` entries and add the following:
 
-```
+```nginx
     location ~ ^/call(?<path>/.*) {
         proxy_pass_request_headers off;
 
@@ -79,7 +81,6 @@ Then, in the *Server* section, remove any existing `location` entries and add th
     }
 
     location / {
-        lua_code_cache off; # remove when going live
         content_by_lua_block { openroutey.go() }
     }
 ```
@@ -119,13 +120,13 @@ For example this routes file routes all traffic to port 8000 on the same box:
 }
 ```
 
-The 'routes' and 'origins' arrays
+The 'routes' and 'origins' arrays are described below.
 
 ### The 'routes' array
 
 * Routes is an ordered array of route rules.
 * Ordering is important. The first rule that matches will be used.
-* Each entry should be an object.
+* Each entry should be an object (associative array).
 * The object must contain `pathMatch`.
  * This is a regular expression of the path for the rule to match.
  * Note that these are Lua regular expressions, which are different from Nginx, and do not have full POSIX support. See 'Regular expressions' below for more.
@@ -181,25 +182,25 @@ By default, the origin will be provided with the same path. Alternatively, the p
 
 * To hard-code the path:
 
-```
+```json
     "originPath": "/some/path"
 ```
 
 * To prefix the path:
 
-```
-    "originPath": "/some/prefix/${uri}
+```json
+    "originPath": "/some/prefix/${uri}"
 ```
 
 * To include an encoded path:
 
-```
-    "originPath": "/path/${uriEncoded}
+```json
+    "originPath": "/path/${uriEncoded}"
 ```
 
 #### Routes entry type #3: Reference another routes file
 
-If you'd like your routes to be split into more than one file, use a routing rule to reference it.
+Routes can be split between more than one file. A routing rule can 'include' another routes file.
 
 In this example, any path starting with `/a` will be sent to `routes-a.json`, and any path starting with `/b` or `/c` will be sent to `routes-b-and-c.json`.
 
@@ -229,7 +230,7 @@ Optionally, `originPathPostfix` can be provided, to postfix something on to ever
 
 Paths are created as follows:
 
-```
+```abnf
 <originProtocolAndDomain><originPath><originPathPostfix>
 ```
 
@@ -242,7 +243,7 @@ Paths are created as follows:
 * If you need to provide a dash in a Lua regex, escape it with a %, e.g. "^/foo%-bar"
 * To test regular expressions use `lua` on the command line, e.g.
 
-```
+```bash
     echo 'print(string.match("foo-bar", "foo%-bar"))' | lua
 ```
 
