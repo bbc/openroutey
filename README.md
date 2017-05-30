@@ -234,7 +234,9 @@ Paths are created as follows:
 <originProtocolAndDomain><originPath><originPathPostfix>
 ```
 
-### Regular expressions
+### Use of regular expressions for within the route definitions
+
+Here's some advice on creating the regular expressions for the `pathMatch` entry of the route definition
 
 * The `pathMatch` entry is always a regular expression.
 * Don't forget to start with `^` and end with `$` if you need to fully match the path.
@@ -246,6 +248,46 @@ Paths are created as follows:
 ```bash
     echo 'print(string.match("foo-bar", "foo%-bar"))' | lua
 ```
+
+## Reloading routes
+
+OpenRoutey does not reconsider the routes files at every request, for performance reasons. This is especially true when multiple remote routes files are involved. Instead, routes files are loaded on three occasions:
+
+# When OpenResty is started/restarted/reloaded
+# On request
+# At periodic intervals
+
+Let's consider each in turn.
+
+### Reloading routes method #1: on OpenResty restart/reload
+
+The JSON routes files are reloaded when OpenResty is reloaded/restarted. (e.g. with `service openresty reload` or `openresty -s reload`)
+
+### Reloading routes method #2: On demand
+
+You can create a specific end-point which tells OpenRoutey to immediately reconsider the routes files, by adding this extra location block into
+
+```nginx
+    # Warning: although it's safe, think twice before making this public-facing,
+    # as it will make your server do extra load.
+    location /reload-routes {
+        content_by_lua_block {
+            if openroutey.reloadRoutesFile() then
+                ngx.say('OK')
+            else
+                ngx.say('FAILED, see error log for details')
+            end
+        }
+    }
+```
+
+Now, every time you call ```/reload-routes```, OpenResty will reload all routes files.
+
+You can, of course, change the path ```/reload-routes``` to whatever you want.
+
+### Reloading routes method #3: At periodic intervals
+
+!!! TODO
 
 ## Testing
 
