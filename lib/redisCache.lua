@@ -8,6 +8,7 @@ M.STALE = 'STALE'
 
 -- Given a URL and response from origin, stores it in Redis, if permitted
 function M.storeResponse(url, response)
+    if not config.redisHost then return end
     local cacheSeconds = getCacheSeconds(response)
     if cacheSeconds == nil then return end -- Don't cache if we're not supposed to
 
@@ -39,6 +40,7 @@ end
 --    MISS if not in cache
 --    STALE if in cache and not fresh
 function M.urlStatus(url)
+    if not config.redisHost then return M.MISS end
     local redis = getRedis()
     if (not redis) then return M.MISS end
     local res,err = redis:hmget("origin:" .. url, "timestamp", "cacheSeconds", "etag")
@@ -58,6 +60,7 @@ end
 
 -- Given a URL, returns the cache of the respone we received from origin
 function M.getCachedResponse(url)
+    if not config.redisHost then return end
     local redis = getRedis()
     local responseJson,err = redis:hget("origin:" .. url, "response")
     local responseDecoded, responseErrors = jsonSafe.decode(responseJson)

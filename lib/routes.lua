@@ -11,17 +11,40 @@ function M.findRoute()
     return findRouteInLoadedRoutes()
 end
 
+-- (Re)loads the primary routes file. Returns TRUE iff successful.
+-- This only needs to be called explicitly when there is need to reconsider the routes.
+function M.reloadRoutesFile()
+    local sharedDict = ngx.shared.openroutey
+    local routesFile
+    routesDir, routesFile = string.match(config.routesFile , "^(.+)/(.+)$")
+    local newRoutes = processRoutesFile(routesFile)
+    if newRoutes then
+        M.routes = newRoutes
+        local routesEncoded, encodingErrors = jsonSafe.encode(M.routes)
+        if encodingErrors then
+            ngx.log(ngx.ERR, "Failed to encode routes:" .. encodingErrors)
+        else
+            sharedDict:set('routes', routesEncoded)
+        end
+        ngx.log(ngx.ERR, "OpenRoutey routes loaded")
+        return true
+    end
+
+    ngx.log(ngx.ERR, "OpenRoutey routes FAILED to load")
+    return false
+end
+
 function loadRoutes()
     if M.resetRoutes then
         M.resetRoutes = false
-        loadRoutesFromFile()
+        M.reloadRoutesFile()
         return
     end
 
     if M.routes then return end
     loadRoutesFromSharedDictionary()
     if M.routes then return end
-    loadRoutesFromFile()
+    M.reloadRoutesFile()
 end
 
 function loadRoutesFromSharedDictionary()
@@ -34,15 +57,6 @@ function loadRoutesFromSharedDictionary()
     else
         M.routes = decoded
     end
-end
-
-function loadRoutesFromFile()
-    local sharedDict = ngx.shared.openroutey
-    local routesFile
-    routesDir, routesFile = string.match(config.routesFile , "^(.+)/(.+)$")
-    M.routes = processRoutesFile(routesFile)
-    sharedDict:set('routes', json.encode(M.routes))
-    ngx.log(ngx.ERR, "OpenRoutey routes loaded")
 end
 
 function findRouteInLoadedRoutes()
@@ -66,7 +80,7 @@ function readRoutesFile(filename)
 
         local decoded, decodeErrors = jsonSafe.decode(contents)
         if (decodeErrors) then
-            ngx.log(ngx.ERR, "Failed to read " .. filename .. ":" .. decodeErrors)
+            ngx.log(ngx.ERR, "Failed to read " .. fileNameFullPath .. ":" .. decodeErrors)
             return
         end
 
@@ -110,9 +124,7 @@ end
 function readRoutes(routes, origins)
     local theseRoutes = {}
     for count, routeDetails in pairs(routes) do
-        -- ngx.log(ngx.ERR, "calling processRoute")
         local moreRoutes = processRoute(routeDetails, origins)
-        -- ngx.log(ngx.ERR, "after processRoute, more routes '" .. json.encode(moreRoutes))
         if (moreRoutes) then
             theseRoutes = appendToArray(theseRoutes, moreRoutes)
         end
