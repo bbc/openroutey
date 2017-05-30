@@ -12,12 +12,14 @@ local redisCache = require "redisCache"
 local headers = require "headers"
 local errorDisplay = require "errorDisplay"
 
+-- Called once whenever OpenResty is started/restarted/reloaded
 function M.init(updatedConfig)
     config.set(updatedConfig)
     routes.resetRoutes = true
     ngx.log(ngx.ERR, "OpenRoutey initialised")
 end
 
+-- Called whenever there is a route to handle
 function M.go()
     local route = routes.findRoute()
     if (route) then
@@ -29,14 +31,12 @@ end
 
 -- Once a route has been found, handle it
 function processFoundRouting(routeDetails)
-    -- ngx.log(ngx.ERR, "ROUTEDETAILS:" .. JSON.encode(routeDetails))
     if routeDetails.originUri then
         callOrigin(routeDetails)
     elseif routeDetails.status and (routeDetails.status == 301 or routeDetails.status == 302) then
         if (not routeDetails.location) then
             errorDisplay.displayError(500, 'Incomplete redirect')
         else
-            -- ngx.log(ngx.ERR, "RED: ", routeDetails.location, routeDetails.status)
             ngx.redirect(routeDetails.location, routeDetails.status)
         end
     elseif routeDetails.status then
@@ -50,6 +50,7 @@ function processFoundRouting(routeDetails)
     end
 end
 
+-- Handles the presence of ${thing} within the config URI
 function completeOriginUri(origin)
     local iterator, err = ngx.re.gmatch(origin, "\\${([^}]+)}")
     if not iterator then
@@ -86,10 +87,12 @@ function completeOriginUri(origin)
      return origin
 end
 
+-- Logging of every response
 function logResponse(domain, path, res)
-    ngx.log(ngx.ERR, domain .. ngx.unescape_uri(path) .. " returned " .. res.status)
+    ngx.log(ngx.ERR, "originUri=" .. domain .. ngx.unescape_uri(path) .. ", originResponse=" .. res.status)
 end
 
+-- Call the origin, and then return it to the user
 function callOrigin(routeDetails)
     local originUri = completeOriginUri(routeDetails.originUri)
     local response, cacheStatus = originCaller.callOriginUriIncludingCheckCache(originUri)
@@ -97,8 +100,8 @@ function callOrigin(routeDetails)
     sendResponse(routeDetails, response)
 end
 
+-- Send the response to the user
 function sendResponse(routeDetails, res)
-    -- ngx.log(ngx.ERR, "HEADERS:", JSON.encode(res.header))
     headers.copyHeadersFromOriginResponse(res)
     if res.status == 200 then
         ngx.status = 200
