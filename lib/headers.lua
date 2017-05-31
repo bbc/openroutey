@@ -15,7 +15,6 @@ function M.copyHeadersFromOriginResponse(res)
 
             -- Else, set header unless it's already set, in which case, discard
             elseif not ngx.header[name] then
-                -- ngx.log(ngx.ERR, "****!! Header :" .. name .."="..value)
                 ngx.header[name] = value
             end
         end
