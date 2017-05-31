@@ -289,6 +289,45 @@ You can, of course, change the path ```/reload-routes``` to whatever you want.
 
 !!! TODO
 
+## Redis
+
+OpenRoutey can be configured to use Redis as a response cache. Doing so allows you to:
+
+* Have a cache shared between multiple servers
+* Have a bigger cache than Nginx could support
+* Have a strong 'serve stale' ability, if you are worried about the reliability of your origin(s).
+
+To enable Redis, provide `redisHost` and `redisPort` in the initialisation within `nginx.conf`. For example:
+
+```nginx
+        openroutey.init({
+            routesFile = "/path/to/routes.json",
+            redisHost = "127.0.0.1",
+            redisPort = 6379
+        })
+```
+
+### Nginx cache, Redis cache, or both?
+
+Redis can be used in addition to, or instead of, the default [Nginx cache](https://www.nginx.com/resources/wiki/start/topics/examples/reverseproxycachingexample/).
+
+Advantages of the Nginx cache:
+
+* More efficient (quicker response)
+* Does not involve a network call (if Redis is on a separate box)
+
+Advantages of the Redis cache:
+
+* Can be shared between multiple servers
+  * (This will reduce the number of requests to origin for the same thing)
+* Withstands a server restarting, or the number of servers growing
+  * (Otherwise, a new/restarted server will have to hit origin in order to build up its cache.)
+
+Advantages of using both Nginx and Redis cache:
+
+* All the advantages of the above
+* If Redis fails (or reboots, or is flushed), there is still some origin protection from the Nginx cache.
+
 ## Testing
 
 Testing is done via a Node.JS script (to simulate an origin server), and the Mocha test framework.
